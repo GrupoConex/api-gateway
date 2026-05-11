@@ -35,7 +35,7 @@ func main() {
 		if intranetURL == "" {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Intranet route not configured"})
 		}
-		return fiberProxy.Do(c, intranetURL+"/employees/profix-data")
+		return fiberProxy.Do(c, intranetURL+"/api/employees/profix-data")
 	})
 
 	api.Use(authenticator.Middleware())
