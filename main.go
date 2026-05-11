@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"strings"
 
 	"github.com/fibex/gateway/pkg/auth"
 	"github.com/fibex/gateway/pkg/config"
@@ -31,11 +32,15 @@ func main() {
 	
 	
 	api.Post("/v1/employees", func(c *fiber.Ctx) error {
-		intranetURL := cfg.Routes["intranet"]
+		intranetURL := strings.TrimSuffix(cfg.Routes["intranet"], "/")
 		if intranetURL == "" {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Intranet route not configured"})
 		}
-		return fiberProxy.Do(c, intranetURL+"/api/employees/profix-data")
+		
+		targetURL := intranetURL + "/api/employees/profix-data"
+		log.Printf("[DEBUG] Proxying Profit Trigger to: %s", targetURL)
+		
+		return fiberProxy.Do(c, targetURL)
 	})
 
 	api.Use(authenticator.Middleware())
