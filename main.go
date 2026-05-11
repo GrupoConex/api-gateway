@@ -8,6 +8,7 @@ import (
 	"github.com/fibex/gateway/pkg/proxy"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	fiberProxy "github.com/gofiber/fiber/v2/middleware/proxy"
 )
 
 func main() {
@@ -27,8 +28,17 @@ func main() {
 	})
 
 	api := app.Group("/api")
-	api.Use(authenticator.Middleware())
+	
+	
+	api.Post("/v1/employees", func(c *fiber.Ctx) error {
+		intranetURL := cfg.Routes["intranet"]
+		if intranetURL == "" {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Intranet route not configured"})
+		}
+		return fiberProxy.Do(c, intranetURL+"/employees/profix-data")
+	})
 
+	api.Use(authenticator.Middleware())
 	api.All("/*", router.Handle)
 
 	log.Fatal(app.Listen(":" + cfg.Port))
