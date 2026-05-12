@@ -22,10 +22,11 @@ func main() {
 
 	app.Use(logger.New())
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "*", // En producción podemos restringirlo más luego
-		AllowHeaders:     "Origin, Content-Type, Accept, Authorization, Cookie",
+		AllowOrigins:     "http://localhost:3000, http://localhost:4200, https://frontend-production-060e.up.railway.app",
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization, Cookie, X-Requested-With, X-Framework",
 		AllowMethods:     "GET, POST, PUT, DELETE, OPTIONS, PATCH",
 		AllowCredentials: true,
+		ExposeHeaders:    "Set-Cookie",
 	}))
 
 	authenticator := auth.NewKeycloakAuthenticator(cfg.KeycloakURL, cfg.KeycloakRealm)
