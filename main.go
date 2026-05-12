@@ -34,6 +34,11 @@ func main() {
 
 	authenticator := auth.NewKeycloakAuthenticator(cfg.KeycloakURL, cfg.KeycloakRealm)
 	router := proxy.NewFiberRouter(cfg.Routes)
+	
+	log.Println("[CONFIG] Cargando rutas de proxy...")
+	for svc, url := range cfg.Routes {
+		log.Printf("[CONFIG] %s -> %s", svc, url)
+	}
 
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{"status": "UP", "version": "2.0-solid"})
