@@ -114,5 +114,18 @@ func main() {
 	api.Use(authenticator.Middleware())
 	api.All("/*", router.Handle)
 
+	// Proxy para el Frontend (Punto de entrada único)
+	app.All("/*", func(c *fiber.Ctx) error {
+		frontendURL := strings.TrimSuffix(cfg.Routes["frontend"], "/")
+		if frontendURL == "" {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Frontend route not configured"})
+		}
+		if !strings.HasPrefix(frontendURL, "http") {
+			frontendURL = "https://" + frontendURL
+		}
+		
+		return fiberProxy.Do(c, frontendURL+c.Path())
+	})
+
 	log.Fatal(app.Listen(":" + cfg.Port))
 }
