@@ -71,7 +71,7 @@ func main() {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Viaticos route not configured"})
 		}
 		path := c.Params("*")
-		targetURL := viaticosURL + "/auth/" + path
+		targetURL := viaticosURL + "/api/auth/" + path
 		
 		log.Printf("[PROXY] Viaticos Auth: %s %s -> %s", c.Method(), c.Path(), targetURL)
 		
