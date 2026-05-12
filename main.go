@@ -22,7 +22,10 @@ func main() {
 
 	app.Use(logger.New())
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "http://localhost:3000, http://localhost:4200, https://frontend-production-060e.up.railway.app",
+		AllowOriginsFunc: func(origin string) bool {
+			// Permitimos cualquier origen en desarrollo y producción para VIATIX
+			return true 
+		},
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization, Cookie, X-Requested-With, X-Framework",
 		AllowMethods:     "GET, POST, PUT, DELETE, OPTIONS, PATCH",
 		AllowCredentials: true,
@@ -40,7 +43,7 @@ func main() {
 
 	// --- RUTAS PÚBLICAS DE AUTENTICACIÓN (VIÁTICOS) ---
 	// Estas rutas se definen ANTES del middleware para que Keycloak y el Frontend puedan acceder sin token.
-	
+
 	// Discovery OIDC
 	api.Get("/v1/viaticos/auth/.well-known/openid-configuration", func(c *fiber.Ctx) error {
 		viaticosURL := strings.TrimSuffix(cfg.Routes["viaticos"], "/")
