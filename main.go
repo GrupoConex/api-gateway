@@ -28,10 +28,13 @@ func main() {
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{"status": "UP", "version": "2.0-solid"})
 	})
 
-	// --- RUTAS PÚBLICAS PARA FEDERACIÓN OIDC (VIÁTICOS) ---
-	public := app.Group("/public")
+	api := app.Group("/api")
+
+	// --- RUTAS PÚBLICAS DE AUTENTICACIÓN (VIÁTICOS) ---
+	// Estas rutas se definen ANTES del middleware para que Keycloak y el Frontend puedan acceder sin token.
 	
-	public.Get("/v1/viaticos/auth/.well-known/openid-configuration", func(c *fiber.Ctx) error {
+	// Discovery OIDC
+	api.Get("/v1/viaticos/auth/.well-known/openid-configuration", func(c *fiber.Ctx) error {
 		viaticosURL := strings.TrimSuffix(cfg.Routes["viaticos"], "/")
 		if viaticosURL == "" {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Viaticos route not configured"})
@@ -40,7 +43,8 @@ func main() {
 		return fiberProxy.Do(c, targetURL)
 	})
 
-	public.Get("/v1/viaticos/auth/jwks", func(c *fiber.Ctx) error {
+	// JWKS para validación de firmas
+	api.Get("/v1/viaticos/auth/jwks", func(c *fiber.Ctx) error {
 		viaticosURL := strings.TrimSuffix(cfg.Routes["viaticos"], "/")
 		if viaticosURL == "" {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Viaticos route not configured"})
@@ -49,19 +53,16 @@ func main() {
 		return fiberProxy.Do(c, targetURL)
 	})
 
-	// Nueva ruta para permitir Login/Session/etc a través del Gateway
-	public.All("/v1/viaticos/auth/*", func(c *fiber.Ctx) error {
+	// Proxy para Login/Session/OIDC Flow
+	api.All("/v1/viaticos/auth/*", func(c *fiber.Ctx) error {
 		viaticosURL := strings.TrimSuffix(cfg.Routes["viaticos"], "/")
 		if viaticosURL == "" {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Viaticos route not configured"})
 		}
-		// Proxy completo para todo lo que esté bajo /auth
 		path := c.Params("*")
 		targetURL := viaticosURL + "/auth/" + path
 		return fiberProxy.Do(c, targetURL)
 	})
-
-	api := app.Group("/api")
 
 	api.Use(authenticator.Middleware())
 	api.All("/*", router.Handle)
