@@ -72,6 +72,9 @@ func main() {
 		}
 		path := c.Params("*")
 		targetURL := viaticosURL + "/auth/" + path
+		
+		log.Printf("[PROXY] Viaticos Auth: %s %s -> %s", c.Method(), c.Path(), targetURL)
+		
 		return fiberProxy.Do(c, targetURL)
 	})
 
