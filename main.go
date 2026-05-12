@@ -96,7 +96,15 @@ func main() {
 		c.Request().Header.Set("X-Forwarded-Host", c.Hostname())
 		c.Request().Header.Set("X-Forwarded-Proto", "https")
 		
-		// Ejecutamos el proxy
+		// Ejecutamos el proxy (excepto para OPTIONS que lo manejamos aquí mismo)
+		if c.Method() == "OPTIONS" {
+			c.Response().Header.Set("Access-Control-Allow-Origin", c.Get("Origin"))
+			c.Response().Header.Set("Access-Control-Allow-Credentials", "true")
+			c.Response().Header.Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS,PATCH")
+			c.Response().Header.Set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization, X-Requested-With")
+			return c.SendStatus(fiber.StatusNoContent)
+		}
+
 		err := fiberProxy.Do(c, targetURL)
 		if err != nil {
 			return err
