@@ -23,7 +23,6 @@ func main() {
 	app.Use(logger.New())
 	app.Use(cors.New(cors.Config{
 		AllowOriginsFunc: func(origin string) bool {
-			// Permitimos cualquier origen en desarrollo y producción para VIATIX
 			return true 
 		},
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization, Cookie, X-Requested-With, X-Framework",
@@ -35,7 +34,6 @@ func main() {
 	authenticator := auth.NewKeycloakAuthenticator(cfg.KeycloakURL, cfg.KeycloakRealm)
 	router := proxy.NewFiberRouter(cfg.Routes)
 	
-	log.Println("[CONFIG] Cargando rutas de proxy...")
 	for svc, url := range cfg.Routes {
 		log.Printf("[CONFIG] %s -> %s", svc, url)
 	}
@@ -46,10 +44,6 @@ func main() {
 
 	api := app.Group("/api")
 
-	// --- RUTAS PÚBLICAS DE AUTENTICACIÓN (VIÁTICOS) ---
-	// Estas rutas se definen ANTES del middleware para que Keycloak y el Frontend puedan acceder sin token.
-
-	// Discovery OIDC
 	api.Get("/v1/viaticos/auth/.well-known/openid-configuration", func(c *fiber.Ctx) error {
 		viaticosURL := strings.TrimSuffix(cfg.Routes["viaticos"], "/")
 		if viaticosURL == "" {
@@ -62,7 +56,6 @@ func main() {
 		return fiberProxy.Do(c, targetURL)
 	})
 
-	// JWKS para validación de firmas
 	api.Get("/v1/viaticos/auth/jwks", func(c *fiber.Ctx) error {
 		viaticosURL := strings.TrimSuffix(cfg.Routes["viaticos"], "/")
 		if viaticosURL == "" {
@@ -75,28 +68,24 @@ func main() {
 		return fiberProxy.Do(c, targetURL)
 	})
 
-	// Proxy para Login/Session/OIDC Flow
 	api.All("/v1/viaticos/auth/*", func(c *fiber.Ctx) error {
 		viaticosURL := strings.TrimSuffix(cfg.Routes["viaticos"], "/")
 		if viaticosURL == "" {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Viaticos route not configured"})
 		}
 		
-		// Blindaje: Asegurar protocolo
 		if !strings.HasPrefix(viaticosURL, "http") {
 			viaticosURL = "https://" + viaticosURL
 		}
 
 		path := c.Params("*")
-		targetURL := viaticosURL + "/api/v1/viaticos/auth/" + path
+		targetURL := viaticosURL + "/auth/" + path
 		
 		log.Printf("[PROXY] Viaticos Auth: %s %s -> %s", c.Method(), c.Path(), targetURL)
 		
-		// Inyectamos cabeceras para que Better-Auth sepa que viene del Gateway
 		c.Request().Header.Set("X-Forwarded-Host", c.Hostname())
 		c.Request().Header.Set("X-Forwarded-Proto", "https")
 		
-		// Ejecutamos el proxy (excepto para OPTIONS que lo manejamos aquí mismo)
 		if c.Method() == "OPTIONS" {
 			c.Response().Header.Set("Access-Control-Allow-Origin", c.Get("Origin"))
 			c.Response().Header.Set("Access-Control-Allow-Credentials", "true")
@@ -110,7 +99,6 @@ func main() {
 			return err
 		}
 
-		// BLINDAJE CORS: Forzamos las cabeceras tras el proxy porque Do() las sobreescribe
 		c.Response().Header.Set("Access-Control-Allow-Origin", c.Get("Origin"))
 		c.Response().Header.Set("Access-Control-Allow-Credentials", "true")
 		c.Response().Header.Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS,PATCH")
