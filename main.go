@@ -96,7 +96,19 @@ func main() {
 		c.Request().Header.Set("X-Forwarded-Host", c.Hostname())
 		c.Request().Header.Set("X-Forwarded-Proto", "https")
 		
-		return fiberProxy.Do(c, targetURL)
+		// Ejecutamos el proxy
+		err := fiberProxy.Do(c, targetURL)
+		if err != nil {
+			return err
+		}
+
+		// BLINDAJE CORS: Forzamos las cabeceras tras el proxy porque Do() las sobreescribe
+		c.Response().Header.Set("Access-Control-Allow-Origin", c.Get("Origin"))
+		c.Response().Header.Set("Access-Control-Allow-Credentials", "true")
+		c.Response().Header.Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS,PATCH")
+		c.Response().Header.Set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization, X-Requested-With")
+
+		return nil
 	})
 
 	api.Use(authenticator.Middleware())
