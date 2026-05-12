@@ -55,6 +55,9 @@ func main() {
 		if viaticosURL == "" {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Viaticos route not configured"})
 		}
+		if !strings.HasPrefix(viaticosURL, "http") {
+			viaticosURL = "https://" + viaticosURL
+		}
 		targetURL := viaticosURL + "/auth/.well-known/openid-configuration"
 		return fiberProxy.Do(c, targetURL)
 	})
@@ -64,6 +67,9 @@ func main() {
 		viaticosURL := strings.TrimSuffix(cfg.Routes["viaticos"], "/")
 		if viaticosURL == "" {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Viaticos route not configured"})
+		}
+		if !strings.HasPrefix(viaticosURL, "http") {
+			viaticosURL = "https://" + viaticosURL
 		}
 		targetURL := viaticosURL + "/auth/jwks"
 		return fiberProxy.Do(c, targetURL)
@@ -75,6 +81,12 @@ func main() {
 		if viaticosURL == "" {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Viaticos route not configured"})
 		}
+		
+		// Blindaje: Asegurar protocolo
+		if !strings.HasPrefix(viaticosURL, "http") {
+			viaticosURL = "https://" + viaticosURL
+		}
+
 		path := c.Params("*")
 		targetURL := viaticosURL + "/auth/" + path
 		
