@@ -49,6 +49,18 @@ func main() {
 		return fiberProxy.Do(c, targetURL)
 	})
 
+	// Nueva ruta para permitir Login/Session/etc a través del Gateway
+	public.All("/v1/viaticos/auth/*", func(c *fiber.Ctx) error {
+		viaticosURL := strings.TrimSuffix(cfg.Routes["viaticos"], "/")
+		if viaticosURL == "" {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Viaticos route not configured"})
+		}
+		// Proxy completo para todo lo que esté bajo /auth
+		path := c.Params("*")
+		targetURL := viaticosURL + "/auth/" + path
+		return fiberProxy.Do(c, targetURL)
+	})
+
 	api := app.Group("/api")
 
 	api.Use(authenticator.Middleware())
