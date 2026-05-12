@@ -88,7 +88,7 @@ func main() {
 		}
 
 		path := c.Params("*")
-		targetURL := viaticosURL + "/auth/" + path
+		targetURL := viaticosURL + "/api/v1/viaticos/auth/" + path
 		
 		log.Printf("[PROXY] Viaticos Auth: %s %s -> %s", c.Method(), c.Path(), targetURL)
 		
