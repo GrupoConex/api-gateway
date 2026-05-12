@@ -94,7 +94,7 @@ func main() {
 		
 		// Inyectamos cabeceras para que Better-Auth sepa que viene del Gateway
 		c.Request().Header.Set("X-Forwarded-Host", c.Hostname())
-		c.Request().Header.Set("X-Forwarded-Proto", c.Protocol())
+		c.Request().Header.Set("X-Forwarded-Proto", "https")
 		
 		return fiberProxy.Do(c, targetURL)
 	})
