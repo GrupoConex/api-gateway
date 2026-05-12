@@ -8,6 +8,7 @@ import (
 	"github.com/fibex/gateway/pkg/config"
 	"github.com/fibex/gateway/pkg/proxy"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	fiberProxy "github.com/gofiber/fiber/v2/middleware/proxy"
 )
@@ -20,6 +21,12 @@ func main() {
 	})
 
 	app.Use(logger.New())
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     "*", // En producción podemos restringirlo más luego
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization, Cookie",
+		AllowMethods:     "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+		AllowCredentials: true,
+	}))
 
 	authenticator := auth.NewKeycloakAuthenticator(cfg.KeycloakURL, cfg.KeycloakRealm)
 	router := proxy.NewFiberRouter(cfg.Routes)
