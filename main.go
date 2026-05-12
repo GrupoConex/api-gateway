@@ -92,6 +92,10 @@ func main() {
 		
 		log.Printf("[PROXY] Viaticos Auth: %s %s -> %s", c.Method(), c.Path(), targetURL)
 		
+		// Inyectamos cabeceras para que Better-Auth sepa que viene del Gateway
+		c.Request().Header.Set("X-Forwarded-Host", c.Hostname())
+		c.Request().Header.Set("X-Forwarded-Proto", c.Protocol())
+		
 		return fiberProxy.Do(c, targetURL)
 	})
 
