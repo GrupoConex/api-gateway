@@ -28,20 +28,28 @@ func main() {
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{"status": "UP", "version": "2.0-solid"})
 	})
 
-	api := app.Group("/api")
+	// --- RUTAS PÚBLICAS PARA FEDERACIÓN OIDC (VIÁTICOS) ---
+	public := app.Group("/public")
 	
-	
-	api.Post("/v1/employees", func(c *fiber.Ctx) error {
-		intranetURL := strings.TrimSuffix(cfg.Routes["intranet"], "/")
-		if intranetURL == "" {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Intranet route not configured"})
+	public.Get("/v1/viaticos/auth/.well-known/openid-configuration", func(c *fiber.Ctx) error {
+		viaticosURL := strings.TrimSuffix(cfg.Routes["viaticos"], "/")
+		if viaticosURL == "" {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Viaticos route not configured"})
 		}
-		
-		targetURL := intranetURL + "/api/employees/profix-data"
-		log.Printf("[DEBUG] Proxying Profit Trigger to: %s", targetURL)
-		
+		targetURL := viaticosURL + "/auth/.well-known/openid-configuration"
 		return fiberProxy.Do(c, targetURL)
 	})
+
+	public.Get("/v1/viaticos/auth/jwks", func(c *fiber.Ctx) error {
+		viaticosURL := strings.TrimSuffix(cfg.Routes["viaticos"], "/")
+		if viaticosURL == "" {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Viaticos route not configured"})
+		}
+		targetURL := viaticosURL + "/auth/jwks"
+		return fiberProxy.Do(c, targetURL)
+	})
+
+	api := app.Group("/api")
 
 	api.Use(authenticator.Middleware())
 	api.All("/*", router.Handle)
